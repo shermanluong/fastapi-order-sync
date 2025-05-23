@@ -5,6 +5,31 @@ from app import crud, schemas, database
 
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi import FastAPI
+from loguru import logger
+import sys
+
+from app.api.routes import orders
+from app.db import models
+from app.db.database import engine
+
+
+models.Base.metadata.create_all(bind=engine)
+
+logger.remove()  # Remove default logger
+logger.add(sys.stdout, format="{time} {level} {message}", level="INFO")
+
+app = FastAPI()
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    logger.info(f"Request: {request.method} {request.url}")
+    response = await call_next(request)
+    logger.info(f"Response status: {response.status_code}")
+    return response
+
+app.include_router(orders.router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # For dev purposes

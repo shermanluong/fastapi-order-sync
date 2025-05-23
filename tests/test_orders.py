@@ -23,3 +23,10 @@ async def test_list_orders():
         response = await ac.get("/orders")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+@pytest.mark.asyncio
+async def test_create_order_triggers_external_api():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post("/orders", json={"customer_name": "Alice", "item": "External Widget"})
+    assert response.status_code == 200
+    assert response.json()["item"] == "External Widget"
